@@ -1,0 +1,11 @@
+#app_project      = "terraform-test-445007"
+app_project      = "terraform-prod-445216"
+gcp_region       = "europe-west2"
+gcp_location     = "europe-west2"
+#gcp_auth_file    = "~/service_account-test.json"
+gcp_auth_file    = "~/service_account-prod.json"
+image_name       = "fast-api-ex-v2"
+build_args       = "--set-secrets=UPLOADER_PASSWD=ReadWrite_all:latest  --set-secrets=QUERIER_PASSWD=ReadOnly_querier:latest  --set-secrets=HIGHSCORE_PASSWD=Insert_score:latest "
+app_name         = "fast-api-ex"
+main_dir         = "~/sudoku/fast_api_backend"
+
