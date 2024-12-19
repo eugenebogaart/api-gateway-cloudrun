@@ -7,7 +7,7 @@
 - Configure Gateway
 
 ### Notes:
-This rewrite up is mainly for myself, so donot forget about the work I did. 
+This write up is mainly for myself, so I donot forget about the work I did. 
 However you may use and learn from what I did.
 
 Local docker build is triggered by a null_resource. This executes an oldstyle Unix/Linux make command.
