@@ -56,4 +56,3 @@ resource "google_project_service" "project" {
   service = google_api_gateway_api.api_gw.managed_service
 
 }
-

@@ -5,6 +5,7 @@ module "cloud_run" {
   main_dir         = var.main_dir
   gcp_location     = var.gcp_location
   image_name       = var.image_name
+  service_account  = var.service_account
   readwrite_all_secret =  module.secrets.readwrite_all_secret
   readonly_querier_secret = module.secrets.readonly_querier_secret
   insert_score_secret =  module.secrets.insert_secore_secret
@@ -22,7 +23,7 @@ module "api_gateway" {
   # api             = google_project_service.api
   uri             = module.cloud_run.cloud_run_app.uri
 
-  depends_on = [ google_project_service.run ]
+  depends_on = [ google_project_service.run, module.cloud_run ]
 }
 
 output "gateway_address" {
@@ -47,6 +48,7 @@ module "secrets" {
 
 
 
+
 # Service account needs to have: 'Secret Manager Admin' 
 #  -> IAM -> View By Roles -> Grant Access 
 
@@ -57,7 +59,9 @@ resource "google_project_service" "run" {
       "cloudbuild.googleapis.com",
       "secretmanager.googleapis.com",
       "apigateway.googleapis.com",
-      "apikeys.googleapis.com"
+      "apikeys.googleapis.com",
+      "servicecontrol.googleapis.com",
+      "compute.googleapis.com"
   ])
   service = each.value
   disable_on_destroy = false
@@ -82,3 +86,23 @@ resource "google_apikeys_key" "cloud_run" {
         }
   }
 }
+
+output "API_gateway_key" {
+   sensitive = true
+   value = google_apikeys_key.cloud_run.key_string
+}
+
+# resource "google_compute_network" "network" {
+#   project                 = var.app_project # Replace this with your project ID in quotes
+#   name                    = "tf-prod-network"
+#   auto_create_subnetworks = false
+# }
+
+# resource "google_compute_subnetwork" "vpc_subnetwork" {
+#   project                  = google_compute_network.network.project
+#   name                     = "tf-prod-subnetwork"
+#   ip_cidr_range            = "10.2.0.0/16"
+#   region                   = var.gcp_location
+#   network                  = google_compute_network.network.id
+#   private_ip_google_access = true
+# }

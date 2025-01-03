@@ -61,3 +61,7 @@ variable "api_key" {
   description = "Required Key for insert Highscore and Progress"
 }
 
+variable "service_account" {
+   type      = string
+   description = "Default compute service account"
+}

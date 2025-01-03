@@ -1,7 +1,7 @@
 build: .lastbuild
 	
 .lastbuild: Dockerfile main.py params.py auth.py routers/public.py routers/secure.py
-	docker build -t ${image_name} .  && touch .lastbuild
+	docker build -t ${artifact_image_name} .  && touch .lastbuild
 
 push: .lastpush
 

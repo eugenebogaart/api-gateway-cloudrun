@@ -60,8 +60,6 @@ resource "null_resource" "push_image" {
           EOF
     }
     
-    
-    
      depends_on = [ 
       # Make sure "docker push" happens after "docker build"
       null_resource.build_image, 
@@ -82,11 +80,14 @@ resource "google_cloud_run_v2_service" "app" {
   name     = "${var.image_name}-run"
   location = "${var.gcp_location}"
   deletion_protection = false
+  # Service will has to be accessible publicly
+  # API Gateway does not support internal network/vpc based services 
+  # ingress  = "INGRESS_TRAFFIC_INTERNAL_ONLY"
   ingress  = "INGRESS_TRAFFIC_ALL"
 
   template {
     containers {
-      image = "${var.gcp_location}-docker.pkg.dev/${var.app_project}/cloud-run-source-deploy/${var.image_name}"
+      image = "${var.gcp_location}-docker.pkg.dev/${var.app_project}/cloud-run-source-deploy/${var.image_name}:latest"
       env {
         name = "UPLOADER_PASSWD"
         value_source {
@@ -124,14 +125,30 @@ resource "google_cloud_run_v2_service" "app" {
         }
       }
     }
+    #vpc access does not make much sense because
+    # API Gateway is not able to connect to internal services
+    # at the time of writing
+    # vpc_access {
+    #   network_interfaces {
+    #     network    = "default"
+    #     subnetwork = "default"
+    #   }
+    # }
   }
-
   # traffic {
   #   percent         = 100
   #   latest_revision = true
   # }
+
+  lifecycle {
+     replace_triggered_by = [
+        null_resource.push_image.id
+     ]
+  } 
 }
 
+#  Below sample IAM Policy would make the app acccessible for everybody 
+#  Option: Allow unauthenticated Invocations
 data "google_iam_policy" "all_users_policy" {
   binding {
     role    = "roles/run.invoker"
@@ -139,15 +156,24 @@ data "google_iam_policy" "all_users_policy" {
   }
 }
 
-# resource "google_cloud_run_service_iam_policy" "all_users_iam_policy" {
-#   location    = google_cloud_run_v2_service.app.location
-#   service     = google_cloud_run_v2_service.app.name
-#   policy_data = data.google_iam_policy.all_users_policy.policy_data
-# }
+#  Only allow service account to access the service
+data "google_iam_policy" "service_account_only" {
+  binding {
+    role = "roles/run.invoker"
+    members = [
+     "serviceAccount:${var.service_account}",
+    ]
+  }
+}
+
+resource "google_cloud_run_service_iam_policy" "all_users_iam_policy" {
+  location    = google_cloud_run_v2_service.app.location
+  service     = google_cloud_run_v2_service.app.name
+  policy_data = data.google_iam_policy.all_users_policy.policy_data
+}
 
 data "google_cloud_run_v2_service_iam_policy" "policy" {
   project = "${var.app_project}"
   location = google_cloud_run_v2_service.app.location
   name = google_cloud_run_v2_service.app.name
 }
-

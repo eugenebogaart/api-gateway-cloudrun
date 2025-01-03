@@ -45,3 +45,8 @@ variable "api_key_secret" {
     type      = string
     description = "Reference to Secret Id"
 }
+
+variable "service_account" {
+    type      = string
+    description = "Deafault compute service account"
+}
